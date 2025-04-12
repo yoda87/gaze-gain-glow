@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { ChevronRight, HelpCircle, FileQuestion, MessageSquareText, BookOpen, MessagesSquare, Star } from 'lucide-react';
+import { ChevronRight, Mail, MessageSquareText, FileQuestion, BookOpen, MessagesSquare, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -91,34 +90,15 @@ const HelpCenter = () => {
         
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Contactez-nous</CardTitle>
+            <CardTitle className="text-lg">Nous contacter</CardTitle>
+            <CardDescription>Besoin d'aide supplémentaire ?</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="ghost" className="w-full justify-between" asChild>
               <Link to="/help/contact/email">
                 <div className="flex items-center">
-                  <MessageSquareText className="mr-2 h-5 w-5 text-brand-purple" />
+                  <Mail className="mr-2 h-5 w-5 text-brand-purple" />
                   Envoyer un email
-                </div>
-                <ChevronRight className="h-5 w-5" />
-              </Link>
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-between" asChild>
-              <Link to="/help/contact/chat">
-                <div className="flex items-center">
-                  <MessagesSquare className="mr-2 h-5 w-5 text-brand-purple" />
-                  Chat en direct
-                </div>
-                <ChevronRight className="h-5 w-5" />
-              </Link>
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-between" asChild>
-              <Link to="/help/feedback">
-                <div className="flex items-center">
-                  <Star className="mr-2 h-5 w-5 text-brand-purple" />
-                  Donnez votre avis
                 </div>
                 <ChevronRight className="h-5 w-5" />
               </Link>
