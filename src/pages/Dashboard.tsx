@@ -35,7 +35,10 @@ const Dashboard = () => {
                 <span>Progression niveau {user.level}</span>
                 <span>{user.nextLevelProgress}/{user.nextLevelTarget}</span>
               </div>
-              <Progress value={user.nextLevelProgress / user.nextLevelTarget * 100} className="h-2 bg-white/20" indicatorClassName="bg-brand-gold" />
+              <Progress 
+                value={user.nextLevelProgress / user.nextLevelTarget * 100} 
+                className="h-2 bg-white/20" 
+              />
             </div>
           </CardContent>
         </Card>

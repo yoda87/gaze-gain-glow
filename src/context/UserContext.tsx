@@ -52,10 +52,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     setUser(prev => {
       const newAdsWatchedToday = prev.adsWatchedToday + 1;
-      const newNextLevelProgress = Math.min(prev.nextLevelProgress + 5, prev.nextLevelTarget);
-      const newLevel = newNextLevelProgress === prev.nextLevelTarget ? prev.level + 1 : prev.level;
-      const newNextLevelTarget = newNextLevelProgress === prev.nextLevelTarget ? prev.nextLevelTarget + 25 : prev.nextLevelTarget;
-      const newNextLevelProgress = newNextLevelProgress === prev.nextLevelTarget ? 0 : newNextLevelProgress;
+      const initialLevelProgress = Math.min(prev.nextLevelProgress + 5, prev.nextLevelTarget);
+      const newLevel = initialLevelProgress === prev.nextLevelTarget ? prev.level + 1 : prev.level;
+      const newNextLevelTarget = initialLevelProgress === prev.nextLevelTarget ? prev.nextLevelTarget + 25 : prev.nextLevelTarget;
+      const newNextLevelProgress = initialLevelProgress === prev.nextLevelTarget ? 0 : initialLevelProgress;
       
       return {
         ...prev,
