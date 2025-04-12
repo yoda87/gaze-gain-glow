@@ -12,6 +12,8 @@ import WatchAd from "./pages/WatchAd";
 import Rewards from "./pages/Rewards";
 import Referral from "./pages/Referral";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +47,8 @@ const App = () => {
               <Route path="/rewards" element={<Rewards />} />
               <Route path="/referral" element={<Referral />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/help" element={<HelpCenter />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/context/UserContext';
 import Layout from '@/components/Layout';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { user } = useUser();
@@ -86,17 +87,23 @@ const Profile = () => {
             <CardTitle className="text-lg">Aide & Support</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button variant="ghost" className="w-full justify-start">
-              <HelpCircle className="mr-2 h-5 w-5 text-brand-purple" />
-              Centre d'aide
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/help">
+                <HelpCircle className="mr-2 h-5 w-5 text-brand-purple" />
+                Centre d'aide
+              </Link>
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <User className="mr-2 h-5 w-5 text-brand-purple" />
-              Contactez-nous
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/help/contact">
+                <User className="mr-2 h-5 w-5 text-brand-purple" />
+                Contactez-nous
+              </Link>
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <Settings className="mr-2 h-5 w-5 text-brand-purple" />
-              Paramètres du compte
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/settings">
+                <Settings className="mr-2 h-5 w-5 text-brand-purple" />
+                Paramètres du compte
+              </Link>
             </Button>
           </CardContent>
         </Card>
