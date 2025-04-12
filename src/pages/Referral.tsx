@@ -1,0 +1,168 @@
+
+import React, { useState } from 'react';
+import { Users, Link as LinkIcon, Copy, Share2, Check } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
+import { useUser } from '@/context/UserContext';
+import Layout from '@/components/Layout';
+
+const Referral = () => {
+  const { user } = useUser();
+  const [copied, setCopied] = useState(false);
+  const referralLink = "https://gazegainglow.app/join/ref123456";
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    
+    toast({
+      title: "Lien copié !",
+      description: "Le lien de parrainage a été copié dans votre presse-papier.",
+    });
+    
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  const shareReferral = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Rejoins-moi sur Gaze Gain Glow',
+        text: 'Utilise mon lien pour t\'inscrire et nous gagnerons tous les deux des points bonus!',
+        url: referralLink,
+      })
+      .catch(error => console.log('Error sharing', error));
+    } else {
+      copyToClipboard();
+    }
+  };
+  
+  return (
+    <Layout>
+      <div className="container max-w-md mx-auto pt-6 pb-20 px-4">
+        <h1 className="text-2xl font-bold mb-2">Parrainage</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Invitez vos amis et gagnez ensemble
+        </p>
+        
+        <Card className="mb-6 bg-gradient-to-br from-brand-purple to-brand-purple/80 text-white border-none">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-white/20 rounded-full">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Programme de parrainage</h3>
+                <p className="text-sm text-white/80">Gagnez 200 points par ami inscrit</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-white/10 rounded-lg p-3 text-center">
+                <p className="text-sm text-white/80">Filleuls actifs</p>
+                <p className="text-2xl font-bold">{user.referrals}</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-3 text-center">
+                <p className="text-sm text-white/80">Points gagnés</p>
+                <p className="text-2xl font-bold">{user.referralEarnings}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Votre lien de parrainage</CardTitle>
+            <CardDescription>Partagez ce lien avec vos amis</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex mb-4">
+              <Input
+                value={referralLink}
+                readOnly
+                className="rounded-r-none"
+              />
+              <Button
+                onClick={copyToClipboard}
+                variant="outline"
+                className="rounded-l-none border-l-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={copyToClipboard}
+                className="flex items-center"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copier
+              </Button>
+              <Button
+                onClick={shareReferral}
+                className="flex items-center bg-gradient-to-br from-brand-purple to-brand-purple/80"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Partager
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Comment ça marche</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="bg-brand-purple/10 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <span className="text-brand-purple font-semibold">1</span>
+                </div>
+                <div>
+                  <p className="font-medium">Partagez votre lien</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Envoyez votre lien de parrainage à vos amis
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="bg-brand-purple/10 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <span className="text-brand-purple font-semibold">2</span>
+                </div>
+                <div>
+                  <p className="font-medium">Ils s'inscrivent</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Vos amis créent un compte via votre lien
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="bg-brand-purple/10 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <span className="text-brand-purple font-semibold">3</span>
+                </div>
+                <div>
+                  <p className="font-medium">Vous gagnez tous les deux</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Recevez 200 points pour chaque ami qui s'inscrit
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </Layout>
+  );
+};
+
+export default Referral;
