@@ -10,7 +10,7 @@ const SplashScreen = () => {
       </div>
       
       <h1 className="text-4xl font-bold text-white mb-4 animate-slide-in">
-        Gaze Gain Glow
+        PubCash
       </h1>
       
       <p className="text-xl text-white/90 mb-8 animate-slide-in" style={{ animationDelay: '0.2s' }}>
