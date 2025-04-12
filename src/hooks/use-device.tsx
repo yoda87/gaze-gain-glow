@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 interface DeviceInfo {
   isNative: boolean;
@@ -18,11 +19,11 @@ export function useDevice(): DeviceInfo {
 
   useEffect(() => {
     // Check if the app is running in a Capacitor native environment
-    const isNative = window.Capacitor?.isNativePlatform() || false;
+    const isNative = Capacitor.isNativePlatform();
     
     // Detect platform
-    const isAndroid = isNative && window.Capacitor?.getPlatform() === 'android';
-    const isIOS = isNative && window.Capacitor?.getPlatform() === 'ios';
+    const isAndroid = isNative && Capacitor.getPlatform() === 'android';
+    const isIOS = isNative && Capacitor.getPlatform() === 'ios';
     
     // Feature detection
     const hasHaptics = 'navigator' in window && 'vibrate' in navigator;
