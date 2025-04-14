@@ -55,7 +55,8 @@ const Login = () => {
         throw error;
       }
       
-      navigate('/');
+      // No need to navigate here as AuthContext will handle this
+      // when it detects the SIGNED_IN event
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error('Erreur de connexion', {

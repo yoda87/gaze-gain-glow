@@ -60,7 +60,8 @@ const SignUp = () => {
         options: {
           data: {
             name: data.name
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
 
@@ -72,7 +73,8 @@ const SignUp = () => {
         description: 'Votre compte a été créé avec succès.'
       });
       
-      navigate('/');
+      // No need to navigate here as AuthContext will handle this
+      // when it detects the SIGNED_IN event
     } catch (error: any) {
       console.error('Signup error:', error);
       if (error.message.includes('already registered')) {

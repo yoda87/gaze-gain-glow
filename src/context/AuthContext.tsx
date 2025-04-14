@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_IN') {
           toast.success('Connexion réussie !');
+          navigate('/');
         } else if (event === 'SIGNED_OUT') {
           toast.info('Vous êtes déconnecté');
           navigate('/login');
@@ -56,6 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setIsAuthenticated(!!session);
       setIsLoading(false);
+      
+      // If user is authenticated but on login or signup page, redirect to home
+      if (session && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
+        navigate('/');
+      }
     });
 
     return () => subscription.unsubscribe();
