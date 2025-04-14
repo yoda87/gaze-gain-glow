@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserProvider } from "./context/UserContext";
+import { AuthProvider } from "./context/AuthContext";
 import SplashScreen from "./pages/SplashScreen";
 import Dashboard from "./pages/Dashboard";
 import WatchAd from "./pages/WatchAd";
@@ -15,6 +17,8 @@ import Settings from "./pages/Settings";
 import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 import ContactEmail from "./pages/ContactEmail";
+import SignUp from "./pages/SignUp";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -36,25 +40,29 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/watch-ad" element={<WatchAd />} />
-              <Route path="/rewards" element={<Rewards />} />
-              <Route path="/referral" element={<Referral />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/help" element={<HelpCenter />} />
-              <Route path="/help/contact/email" element={<ContactEmail />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </UserProvider>
+      <AuthProvider>
+        <UserProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/watch-ad" element={<WatchAd />} />
+                <Route path="/rewards" element={<Rewards />} />
+                <Route path="/referral" element={<Referral />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/help" element={<HelpCenter />} />
+                <Route path="/help/contact/email" element={<ContactEmail />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </UserProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
