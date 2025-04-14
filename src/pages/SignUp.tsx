@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { AtSign, Eye, EyeOff, Lock, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
 
 const signUpSchema = z.object({
   email: z.string().email({ message: "Adresse email invalide" }),
@@ -30,6 +31,14 @@ const SignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -60,11 +69,12 @@ const SignUp = () => {
       }
 
       toast.success('Inscription réussie !', {
-        description: 'Veuillez vérifier votre email pour confirmer votre compte.'
+        description: 'Votre compte a été créé avec succès.'
       });
       
       navigate('/');
     } catch (error: any) {
+      console.error('Signup error:', error);
       if (error.message.includes('already registered')) {
         toast.error('Erreur d\'inscription', {
           description: 'Cette adresse email est déjà utilisée.'

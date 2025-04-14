@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Bell, CreditCard, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -9,13 +9,59 @@ import { useUser } from '@/context/UserContext';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface Profile {
+  id: string;
+  name: string;
+  created_at: string;
+}
 
 const Profile = () => {
   const { user: userProfile } = useUser();
   const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          throw error;
+        }
+        
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Erreur lors du chargement du profil');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
   
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }).format(date);
   };
   
   return (
@@ -25,22 +71,34 @@ const Profile = () => {
         
         <Card className="mb-6">
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="bg-gradient-to-br from-brand-purple to-brand-purple/80 h-16 w-16 rounded-full flex items-center justify-center text-white">
-              <User className="h-8 w-8" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold">{userProfile.name}</h2>
-              <p className="text-gray-600 dark:text-gray-400">{user?.email}</p>
-              <p className="text-gray-600 dark:text-gray-400">Membre depuis Avril 2025</p>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="bg-brand-purple/10 px-2 py-0.5 rounded-full text-xs text-brand-purple font-medium">
-                  Niveau {userProfile.level}
-                </div>
-                <div className="bg-brand-gold/10 px-2 py-0.5 rounded-full text-xs text-brand-gold font-medium">
-                  Premium
+            {loading ? (
+              <div className="w-full h-16 flex items-center justify-center">
+                <div className="animate-pulse w-full">
+                  <div className="h-16 bg-gray-200 rounded-full w-16 mb-2"></div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="bg-gradient-to-br from-brand-purple to-brand-purple/80 h-16 w-16 rounded-full flex items-center justify-center text-white">
+                  <User className="h-8 w-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">{profile?.name || userProfile.name}</h2>
+                  <p className="text-gray-600 dark:text-gray-400">{user?.email}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Membre depuis {profile ? formatDate(profile.created_at) : 'Avril 2025'}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="bg-brand-purple/10 px-2 py-0.5 rounded-full text-xs text-brand-purple font-medium">
+                      Niveau {userProfile.level}
+                    </div>
+                    <div className="bg-brand-gold/10 px-2 py-0.5 rounded-full text-xs text-brand-gold font-medium">
+                      Premium
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
         
