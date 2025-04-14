@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserProvider } from "./context/UserContext";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./pages/SplashScreen";
 import Dashboard from "./pages/Dashboard";
 import WatchAd from "./pages/WatchAd";
@@ -40,29 +41,35 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <UserProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <UserProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
               <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/watch-ad" element={<WatchAd />} />
-                <Route path="/rewards" element={<Rewards />} />
-                <Route path="/referral" element={<Referral />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/help" element={<HelpCenter />} />
-                <Route path="/help/contact/email" element={<ContactEmail />} />
+                {/* Public routes */}
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/watch-ad" element={<WatchAd />} />
+                  <Route path="/rewards" element={<Rewards />} />
+                  <Route path="/referral" element={<Referral />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/help" element={<HelpCenter />} />
+                  <Route path="/help/contact/email" element={<ContactEmail />} />
+                </Route>
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </UserProvider>
-      </AuthProvider>
+            </TooltipProvider>
+          </UserProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
