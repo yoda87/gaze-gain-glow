@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { AtSign, Eye, EyeOff, Lock, User } from 'lucide-react';
+import { AtSign, Eye, EyeOff, Lock, User, Gift } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 
@@ -28,6 +28,8 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref') || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -59,7 +61,9 @@ const SignUp = () => {
         password: data.password,
         options: {
           data: {
-            name: data.name
+            name: data.name,
+            referredBy: referralCode || null, // Store referral code
+            balance: 0 // Initialize balance to zero
           },
           emailRedirectTo: window.location.origin
         }
@@ -101,6 +105,16 @@ const SignUp = () => {
           <h1 className="text-3xl font-bold mb-2 text-brand-purple">Inscription</h1>
           <p className="text-gray-600">Créez votre compte pour commencer à gagner des récompenses</p>
         </div>
+
+        {referralCode && (
+          <div className="mb-6 bg-brand-purple/10 p-4 rounded-lg flex items-center">
+            <Gift className="text-brand-purple mr-3 h-5 w-5" />
+            <div>
+              <p className="text-sm font-medium">Vous avez été parrainé(e) !</p>
+              <p className="text-xs text-gray-600">Vous recevrez un bonus après votre inscription</p>
+            </div>
+          </div>
+        )}
 
         <Card>
           <CardHeader>

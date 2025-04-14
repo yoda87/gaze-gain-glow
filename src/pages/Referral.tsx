@@ -1,24 +1,33 @@
 
-import React, { useState } from 'react';
-import { Users, Link as LinkIcon, Copy, Share2, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Link as LinkIcon, Copy, Share2, Check, Gift } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
+import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
+import { supabase } from '@/integrations/supabase/client';
 
 const Referral = () => {
-  const { user } = useUser();
+  const { user, updateReferrals } = useUser();
+  const { user: authUser } = useAuth();
   const [copied, setCopied] = useState(false);
-  const referralLink = "https://gazegainglow.app/join/ref123456";
+  const [referralLink, setReferralLink] = useState("");
+  
+  useEffect(() => {
+    if (user.referralCode) {
+      // Use the current origin (based on where the app is running) with the referral code
+      setReferralLink(`${window.location.origin}/signup?ref=${user.referralCode}`);
+    }
+  }, [user.referralCode]);
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     
-    toast({
-      title: "Lien copié !",
+    toast.success("Lien copié !", {
       description: "Le lien de parrainage a été copié dans votre presse-papier.",
     });
     
@@ -35,6 +44,17 @@ const Referral = () => {
       .catch(error => console.log('Error sharing', error));
     } else {
       copyToClipboard();
+    }
+  };
+  
+  // For demonstration, let's simulate checking for a new referral
+  const checkForNewReferral = () => {
+    // In a real app, this would check the database
+    // For now, just simulate a new referral (20% chance)
+    if (Math.random() < 0.2) {
+      updateReferrals(1, 200);
+    } else {
+      toast.info("Aucun nouveau filleul pour l'instant");
     }
   };
   
@@ -68,6 +88,14 @@ const Referral = () => {
                 <p className="text-2xl font-bold">{user.referralEarnings}</p>
               </div>
             </div>
+            
+            <Button 
+              onClick={checkForNewReferral} 
+              className="w-full bg-white text-brand-purple hover:bg-white/90 flex items-center justify-center"
+            >
+              <Gift className="h-4 w-4 mr-2" />
+              Vérifier les nouveaux filleuls
+            </Button>
           </CardContent>
         </Card>
         
