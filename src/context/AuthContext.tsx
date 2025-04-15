@@ -31,46 +31,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('AuthProvider initializing...');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, currentSession) => {
         console.log('Auth state changed:', event);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsAuthenticated(!!session);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setIsAuthenticated(!!currentSession);
         setIsLoading(false);
         
         if (event === 'SIGNED_IN') {
           toast.success('Connexion réussie !');
-          navigate('/');
+          // Use setTimeout to prevent auth deadlocks
+          setTimeout(() => {
+            navigate('/');
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
           toast.info('Vous êtes déconnecté');
-          navigate('/login');
+          // Use setTimeout to prevent auth deadlocks
+          setTimeout(() => {
+            navigate('/login');
+          }, 0);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Existing session:', session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-      
-      // If user is authenticated but on login or signup page, redirect to home
-      if (session && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
-        navigate('/');
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('Existing session:', currentSession);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setIsAuthenticated(!!currentSession);
+        
+        // If user is authenticated but on login or signup page, redirect to home
+        if (currentSession && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+    
+    checkSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/login');
+      // We don't need to navigate here as the onAuthStateChange listener will handle it
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       toast.error('Erreur lors de la déconnexion');

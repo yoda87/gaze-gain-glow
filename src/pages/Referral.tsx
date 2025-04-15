@@ -1,20 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Link as LinkIcon, Copy, Share2, Check, Gift } from 'lucide-react';
+import { Users, Copy, Share2, Check, Gift } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
-import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
 
 const Referral = () => {
   const { user, updateReferrals } = useUser();
-  const { user: authUser } = useAuth();
   const [copied, setCopied] = useState(false);
   const [referralLink, setReferralLink] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
   
   useEffect(() => {
     if (user.referralCode) {
@@ -47,14 +46,22 @@ const Referral = () => {
     }
   };
   
-  // For demonstration, let's simulate checking for a new referral
-  const checkForNewReferral = () => {
-    // In a real app, this would check the database
-    // For now, just simulate a new referral (20% chance)
-    if (Math.random() < 0.2) {
-      updateReferrals(1, 200);
-    } else {
-      toast.info("Aucun nouveau filleul pour l'instant");
+  // Check for new referrals
+  const checkForNewReferral = async () => {
+    setIsChecking(true);
+    try {
+      // In a real app, this would check the database
+      // For now, just simulate a new referral (20% chance)
+      if (Math.random() < 0.2) {
+        updateReferrals(1, 200);
+      } else {
+        toast.info("Aucun nouveau filleul pour l'instant");
+      }
+    } catch (error) {
+      console.error('Error checking referrals:', error);
+      toast.error("Erreur lors de la vérification");
+    } finally {
+      setIsChecking(false);
     }
   };
   
@@ -92,9 +99,10 @@ const Referral = () => {
             <Button 
               onClick={checkForNewReferral} 
               className="w-full bg-white text-brand-purple hover:bg-white/90 flex items-center justify-center"
+              disabled={isChecking}
             >
               <Gift className="h-4 w-4 mr-2" />
-              Vérifier les nouveaux filleuls
+              {isChecking ? 'Vérification...' : 'Vérifier les nouveaux filleuls'}
             </Button>
           </CardContent>
         </Card>

@@ -25,14 +25,14 @@ const Login = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Redirect to home if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -68,6 +68,19 @@ const Login = () => {
   };
 
   const togglePassword = () => setShowPassword(!showPassword);
+
+  if (isLoading) {
+    return (
+      <Layout hideNav>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-pulse text-center">
+            <div className="h-10 w-10 mx-auto mb-4 rounded-full bg-brand-purple/30"></div>
+            <p className="text-gray-600">Chargement...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout hideNav>

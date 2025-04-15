@@ -23,6 +23,7 @@ interface UserContextType {
   updateBalance: (amount: number) => void;
   watchAd: () => void;
   updateReferrals: (count: number, earnings: number) => void;
+  loadUserProfile: () => Promise<void>;
 }
 
 // Initial state with zero balance for new users
@@ -46,17 +47,40 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User>(initialUser);
   const { user: authUser, isAuthenticated } = useAuth();
 
-  // Generate a referral code based on user ID when authenticated
+  const loadUserProfile = async () => {
+    if (authUser && isAuthenticated) {
+      try {
+        // Try to fetch user profile from Supabase
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+
+        // Generate a referral code based on user ID
+        const referralCode = authUser.id.substring(0, 8);
+        
+        // Update user state with data from Supabase and add referral code
+        setUser(prev => ({
+          ...prev,
+          name: authUser.user_metadata.name || data?.name || 'Utilisateur',
+          referralCode
+        }));
+      } catch (error) {
+        console.error('Failed to load user profile:', error);
+      }
+    }
+  };
+
+  // Load user profile when authenticated
   useEffect(() => {
     if (authUser && isAuthenticated) {
-      // Use the first 8 characters of the user ID as the referral code
-      const referralCode = authUser.id.substring(0, 8);
-      
-      setUser(prev => ({
-        ...prev,
-        name: authUser.user_metadata.name || 'Utilisateur',
-        referralCode
-      }));
+      loadUserProfile();
     }
   }, [authUser, isAuthenticated]);
 
@@ -105,7 +129,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, updateBalance, watchAd, updateReferrals }}>
+    <UserContext.Provider value={{ user, updateBalance, watchAd, updateReferrals, loadUserProfile }}>
       {children}
     </UserContext.Provider>
   );
