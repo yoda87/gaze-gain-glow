@@ -34,13 +34,30 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentPropsWithoutRef<"div"> & { index: number }
 >(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
-  // Add null check to prevent accessing properties of undefined
-  const slot = inputOTPContext?.slots?.[index]
   
-  // Only destructure if slot exists to prevent errors
-  const char = slot?.char || ''
-  const hasFakeCaret = slot?.hasFakeCaret || false
-  const isActive = slot?.isActive || false
+  // Make sure both inputOTPContext and slots exist before trying to access a slot
+  // This is a more robust null check that prevents accessing undefined arrays
+  if (!inputOTPContext || !inputOTPContext.slots) {
+    // Return an empty placeholder when context or slots are not available
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all first:rounded-l-md first:border-l last:rounded-r-md",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+  
+  // Now we can safely access the slot
+  const slot = inputOTPContext.slots[index];
+  
+  // Still need to handle the case where the specific slot might be undefined
+  const char = slot?.char || '';
+  const hasFakeCaret = slot?.hasFakeCaret || false;
+  const isActive = slot?.isActive || false;
 
   return (
     <div
