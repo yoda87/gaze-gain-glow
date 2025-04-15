@@ -11,22 +11,55 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          balance: number | null
           created_at: string
+          email_verified: boolean | null
           id: string
           name: string | null
           updated_at: string
         }
         Insert: {
+          balance?: number | null
           created_at?: string
+          email_verified?: boolean | null
           id: string
           name?: string | null
           updated_at?: string
         }
         Update: {
+          balance?: number | null
           created_at?: string
+          email_verified?: boolean | null
           id?: string
           name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }

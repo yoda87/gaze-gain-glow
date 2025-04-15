@@ -62,9 +62,15 @@ const EmailVerification = () => {
       }
 
       // Mark the user as verified in the database
-      await supabase.from('profiles').update({
-        email_verified: true
-      }).eq('id', user?.id);
+      // Use a try-catch to avoid issues if email_verified column doesn't exist yet
+      try {
+        await supabase.from('profiles').update({
+          email_verified: true
+        }).eq('id', user?.id);
+      } catch (err) {
+        console.error('Error updating profile:', err);
+        // Continue anyway since the edge function already verified the user
+      }
 
       toast.success('Email vérifié avec succès!', {
         description: 'Vous pouvez maintenant accéder à votre compte'

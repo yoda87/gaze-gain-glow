@@ -43,10 +43,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
         
       if (error) throw error;
-      setIsEmailVerified(!!data?.email_verified);
+      
+      // Check if the email_verified property exists before using it
+      setIsEmailVerified(data && data.email_verified ? true : false);
       
       // If not verified, redirect to verification page
-      if (!data?.email_verified && user?.email) {
+      if (data && !data.email_verified && user?.email) {
         toast.info('Veuillez vérifier votre email', {
           description: 'Confirmez votre adresse email pour accéder à toutes les fonctionnalités'
         });

@@ -69,11 +69,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser(prev => ({
           ...prev,
           name: authUser.user_metadata.name || data?.name || 'Utilisateur',
-          balance: data?.balance || 0, // Ensure balance is 0 if not set
+          // Check if the balance property exists on data
+          balance: data && typeof data.balance === 'number' ? data.balance : 0,
           referralCode,
           // Add payment history if available
-          referrals: data?.referrals || 0,
-          referralEarnings: data?.referral_earnings || 0
+          // Check if referrals and referral_earnings exist on data
+          referrals: data && typeof data.referrals === 'number' ? data.referrals : 0,
+          referralEarnings: data && typeof data.referral_earnings === 'number' ? data.referral_earnings : 0
         }));
       } catch (error) {
         console.error('Failed to load user profile:', error);
