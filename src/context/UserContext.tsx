@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,10 +72,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           // Check if the balance property exists on data
           balance: data && typeof data.balance === 'number' ? data.balance : 0,
           referralCode,
-          // Add payment history if available
-          // Check if referrals and referral_earnings exist on data
-          referrals: data && typeof data.referrals === 'number' ? data.referrals : 0,
-          referralEarnings: data && typeof data.referral_earnings === 'number' ? data.referral_earnings : 0
+          // Add referrals and referral earnings
+          // TypeScript safe way to check properties that might not exist in the database yet
+          referrals: (data && 'referrals' in data && typeof data.referrals === 'number') ? data.referrals : 0,
+          referralEarnings: (data && 'referral_earnings' in data && typeof data.referral_earnings === 'number') ? data.referral_earnings : 0
         }));
       } catch (error) {
         console.error('Failed to load user profile:', error);
