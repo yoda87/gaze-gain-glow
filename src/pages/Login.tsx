@@ -146,6 +146,12 @@ const Login = () => {
                   )}
                 />
 
+                <div className="flex justify-end">
+                  <Link to="/forgot-password" className="text-brand-purple text-sm hover:underline">
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
                 </Button>
