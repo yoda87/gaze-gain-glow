@@ -13,6 +13,11 @@ const generateVerificationCode = () => {
   return Math.floor(10000 + Math.random() * 90000).toString();
 };
 
+// Rate limiting tracker to prevent abuse
+const rateLimitTracker = new Map<string, { count: number, timestamp: number }>();
+const RATE_LIMIT_PERIOD = 60 * 60 * 1000; // 1 hour in milliseconds
+const MAX_ATTEMPTS = 5; // Maximum attempts per hour
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -56,6 +61,52 @@ serve(async (req) => {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    // Apply rate limiting to prevent abuse
+    const clientIp = req.headers.get('CF-Connecting-IP') || 'unknown';
+    const rateKey = `${clientIp}:${email}:${purpose}`;
+    
+    const now = Date.now();
+    const limitData = rateLimitTracker.get(rateKey);
+    
+    if (limitData) {
+      // Reset count if the period has expired
+      if (now - limitData.timestamp > RATE_LIMIT_PERIOD) {
+        rateLimitTracker.set(rateKey, { count: 1, timestamp: now });
+      } else if (limitData.count >= MAX_ATTEMPTS) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded. Please try again later.',
+            success: false
+          }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      } else {
+        // Increment counter
+        rateLimitTracker.set(rateKey, { 
+          count: limitData.count + 1, 
+          timestamp: limitData.timestamp 
+        });
+      }
+    } else {
+      // First attempt
+      rateLimitTracker.set(rateKey, { count: 1, timestamp: now });
+    }
+
     // Find user ID if email exists
     let userId = null;
     const { data: userData, error: userError } = await supabaseClient.auth
@@ -92,21 +143,28 @@ serve(async (req) => {
     const expirationTime = new Date();
     expirationTime.setMinutes(expirationTime.getMinutes() + 30);
     
-    // Save to verification_codes table in Supabase
+    // Delete any existing codes for this email to prevent code accumulation
     await supabaseClient
       .from('verification_codes')
-      .upsert(
-        { 
-          email,
-          code: verificationCode, 
-          expires_at: expirationTime.toISOString(),
-          user_id: userId || '00000000-0000-0000-0000-000000000000' // placeholder if userId not available
-        },
-        { onConflict: 'email' }
-      );
+      .delete()
+      .eq('email', email);
+      
+    // Save to verification_codes table in Supabase
+    const { error: insertError } = await supabaseClient
+      .from('verification_codes')
+      .insert({ 
+        email,
+        code: verificationCode, 
+        expires_at: expirationTime.toISOString(),
+        user_id: userId || '00000000-0000-0000-0000-000000000000' // placeholder if userId not available
+      });
+      
+    if (insertError) {
+      throw insertError;
+    }
 
-    // Send an email with the verification code
-    // For now, we'll just log it (you would implement actual email sending here)
+    // In real implementation, you would send an email with the verification code
+    // For now, we'll just log it
     console.log(`${purpose} code for ${email}: ${verificationCode}`);
     
     // Return success
