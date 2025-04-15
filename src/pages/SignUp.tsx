@@ -63,7 +63,8 @@ const SignUp = () => {
           data: {
             name: data.name,
             referredBy: referralCode || null, // Store referral code
-            balance: 0 // Initialize balance to zero
+            balance: 0, // Initialize balance to zero
+            email_verified: false // Initially not verified
           },
           emailRedirectTo: window.location.origin
         }
@@ -73,12 +74,22 @@ const SignUp = () => {
         throw error;
       }
 
-      toast.success('Inscription réussie !', {
-        description: 'Votre compte a été créé avec succès.'
+      // Call our function to send verification code
+      const { error: codeError } = await supabase.functions.invoke('send-verification-code', {
+        body: { email: data.email }
       });
       
-      // No need to navigate here as AuthContext will handle this
-      // when it detects the SIGNED_IN event
+      if (codeError) {
+        throw codeError;
+      }
+
+      toast.success('Inscription initiée!', {
+        description: 'Veuillez vérifier votre email.'
+      });
+      
+      // Navigate to verification page instead of home
+      navigate('/verify-email', { state: { email: data.email } });
+      
     } catch (error: any) {
       console.error('Signup error:', error);
       if (error.message.includes('already registered')) {

@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import ContactEmail from "./pages/ContactEmail";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import EmailVerification from "./pages/EmailVerification";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => {
                 {/* Public routes */}
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/verify-email" element={<EmailVerification />} />
                 
                 {/* Protected routes */}
                 <Route element={<ProtectedRoute />}>

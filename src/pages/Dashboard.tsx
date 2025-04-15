@@ -12,12 +12,20 @@ const Dashboard = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   
+  // Function to get time of day greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Bonjour";
+    if (hour < 18) return "Bon après-midi";
+    return "Bonsoir";
+  };
+  
   return (
     <Layout>
       <div className="container max-w-md mx-auto pt-6 pb-20 px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">
-            Bienvenue <span className="text-brand-purple">{user.name}</span> !
+            {getGreeting()}, <span className="text-brand-purple">{user.name}</span> !
           </h1>
           <div className="flex items-center gap-1 bg-brand-purple/10 px-3 py-1 rounded-full">
             <Award className="text-brand-purple h-4 w-4" />

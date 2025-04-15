@@ -65,11 +65,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         // Generate a referral code based on user ID
         const referralCode = authUser.id.substring(0, 8);
         
-        // Update user state with data from Supabase and add referral code
+        // Update user state with data from Supabase
         setUser(prev => ({
           ...prev,
           name: authUser.user_metadata.name || data?.name || 'Utilisateur',
-          referralCode
+          balance: data?.balance || 0, // Ensure balance is 0 if not set
+          referralCode,
+          // Add payment history if available
+          referrals: data?.referrals || 0,
+          referralEarnings: data?.referral_earnings || 0
         }));
       } catch (error) {
         console.error('Failed to load user profile:', error);
