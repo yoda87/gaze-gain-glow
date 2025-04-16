@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, TrendingUp } from 'lucide-react';
@@ -46,12 +47,12 @@ const WatchAd = () => {
       await watchAd();
       
       toast.success("Bravo !", {
-        description: `Vous avez gagné ${getPointsPerAd()} points en regardant cette publicité.`,
+        description: `Vous avez gagné ${getPointsPerAd()} points en regardant cette publicité.`
       });
       
       if (user.adsWatchedToday === 1 && user.firstAdWatched && user.signupBonusAwarded) {
         toast.success("Bonus de bienvenue !", {
-          description: "Vous avez reçu 100 points de bonus pour votre première publicité.",
+          description: "Vous avez reçu 100 points de bonus pour votre première publicité."
         });
       }
       
@@ -63,8 +64,8 @@ const WatchAd = () => {
   };
   
   const handleSkip = () => {
-    toast.error("Publicit�� ignorée", {
-      description: "Vous n'avez pas gagné de points cette fois-ci.",
+    toast.error("Publicité ignorée", {
+      description: "Vous n'avez pas gagné de points cette fois-ci."
     });
     navigate('/');
   };

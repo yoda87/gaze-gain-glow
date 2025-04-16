@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface User {
-  id: string; // Ajout de la propriété 'id' manquante
+  id: string;
   name: string;
   balance: number;
   adsWatchedToday: number;
@@ -52,6 +52,7 @@ const SIGNUP_BONUS = 100;
 
 // Initial state with zero balance for new users
 const initialUser: User = {
+  id: '', // Add an empty id as default
   name: '',
   balance: 0,
   adsWatchedToday: 0,
