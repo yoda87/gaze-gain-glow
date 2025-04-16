@@ -1,46 +1,149 @@
 
 import React, { useState } from 'react';
-import { Wallet, Gift, CreditCard, Bitcoin, FileText, ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Wallet, Gift, CreditCard, Bitcoin, FileText, ArrowRight, Phone } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
 import { useUser } from '@/context/UserContext';
 import Layout from '@/components/Layout';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Rewards = () => {
-  const { user, updateBalance } = useUser();
+  const { user, updateBalance, loadUserProfile } = useUser();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'paypal' | 'orange_money'>('paypal');
+  const [paymentEmail, setPaymentEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
   
-  const handleRedeem = () => {
+  // Conversion des points en euros
+  const pointsToEuros = (points: number): number => {
+    return points / 1000 * 0.1; // 1000 points = 0,10€
+  };
+  
+  // Points minimum pour un retrait
+  const minWithdrawalPoints = 25000; // 2,50€
+  
+  const handleRedeem = async () => {
     if (!selectedAmount) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un montant à retirer.",
-        variant: "destructive",
-      });
+      toast.error("Veuillez sélectionner un montant à retirer.");
       return;
     }
     
     if (selectedAmount > user.balance) {
-      toast({
-        title: "Solde insuffisant",
-        description: "Vous n'avez pas assez de points pour cette récompense.",
-        variant: "destructive",
-      });
+      toast.error("Solde insuffisant pour cette récompense.");
       return;
     }
     
-    // Simulate reward redemption
-    updateBalance(-selectedAmount);
+    if (selectedAmount < minWithdrawalPoints) {
+      toast.error(`Le montant minimum de retrait est de ${minWithdrawalPoints} points (${pointsToEuros(minWithdrawalPoints)}€).`);
+      return;
+    }
     
-    toast({
-      title: "Récompense demandée !",
-      description: `Votre retrait de ${selectedAmount} points a été validé. Livraison sous 24-48h.`,
-    });
+    if (selectedMethod === 'paypal' && !paymentEmail) {
+      toast.error("Veuillez saisir votre email PayPal.");
+      return;
+    }
     
-    setSelectedAmount(null);
+    if (selectedMethod === 'orange_money' && !phoneNumber) {
+      toast.error("Veuillez saisir votre numéro de téléphone.");
+      return;
+    }
+    
+    try {
+      setIsRedeeming(true);
+      
+      // Créer le retrait dans la base de données
+      const { error } = await supabase
+        .from('withdrawals')
+        .insert({
+          user_id: user.id, // Assurez-vous que l'ID utilisateur est disponible
+          amount_points: selectedAmount,
+          amount_euros: pointsToEuros(selectedAmount),
+          payment_method: selectedMethod,
+          payment_details: selectedMethod === 'paypal' 
+            ? { email: paymentEmail } 
+            : { phone: phoneNumber }
+        });
+        
+      if (error) throw error;
+      
+      // Déduire les points du solde utilisateur
+      await updateBalance(-selectedAmount);
+      
+      // Recharger le profil utilisateur
+      await loadUserProfile();
+      
+      toast.success("Retrait demandé !", {
+        description: `Votre retrait de ${pointsToEuros(selectedAmount)}€ a été validé. Traitement sous 24-48h.`
+      });
+      
+      // Réinitialiser le formulaire
+      setSelectedAmount(null);
+      setPaymentEmail('');
+      setPhoneNumber('');
+      
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      toast.error("Erreur lors de la demande de retrait.");
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+  
+  const isWithdrawalPossible = user.balance >= minWithdrawalPoints;
+  
+  // Get previous withdrawals
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  
+  React.useEffect(() => {
+    const fetchWithdrawals = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        setWithdrawals(data || []);
+      } catch (error) {
+        console.error('Error fetching withdrawals:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    
+    fetchWithdrawals();
+  }, []);
+  
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', { 
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
+  
+  // Format withdrawal status
+  const formatStatus = (status: string): { text: string, color: string } => {
+    switch (status) {
+      case 'pending':
+        return { text: 'En attente', color: 'text-yellow-600' };
+      case 'processing':
+        return { text: 'En traitement', color: 'text-blue-600' };
+      case 'completed':
+        return { text: 'Complété', color: 'text-green-600' };
+      case 'rejected':
+        return { text: 'Refusé', color: 'text-red-600' };
+      default:
+        return { text: status, color: 'text-gray-600' };
+    }
   };
   
   return (
@@ -52,18 +155,14 @@ const Rewards = () => {
         </p>
         
         <Tabs defaultValue="paypal" className="mb-6">
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="paypal" className="flex flex-col items-center py-3">
               <Wallet className="h-5 w-5 mb-1" />
               <span className="text-xs">PayPal</span>
             </TabsTrigger>
-            <TabsTrigger value="gift" className="flex flex-col items-center py-3">
-              <Gift className="h-5 w-5 mb-1" />
-              <span className="text-xs">Cartes</span>
-            </TabsTrigger>
-            <TabsTrigger value="crypto" className="flex flex-col items-center py-3">
-              <Bitcoin className="h-5 w-5 mb-1" />
-              <span className="text-xs">Crypto</span>
+            <TabsTrigger value="orange_money" className="flex flex-col items-center py-3">
+              <Phone className="h-5 w-5 mb-1" />
+              <span className="text-xs">Orange Money</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex flex-col items-center py-3">
               <FileText className="h-5 w-5 mb-1" />
@@ -81,130 +180,106 @@ const Rewards = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
                     <Button
-                      variant={selectedAmount === 1000 ? "default" : "outline"}
-                      className={selectedAmount === 1000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(1000)}
+                      variant={selectedAmount === 25000 ? "default" : "outline"}
+                      className={selectedAmount === 25000 ? "border-2 border-brand-purple" : ""}
+                      onClick={() => {
+                        setSelectedMethod('paypal');
+                        setSelectedAmount(25000);
+                      }}
                     >
-                      1000 points = 5€
+                      25000 points = 2,50€
                     </Button>
                     <Button
-                      variant={selectedAmount === 2000 ? "default" : "outline"}
-                      className={selectedAmount === 2000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(2000)}
+                      variant={selectedAmount === 50000 ? "default" : "outline"}
+                      className={selectedAmount === 50000 ? "border-2 border-brand-purple" : ""}
+                      onClick={() => {
+                        setSelectedMethod('paypal');
+                        setSelectedAmount(50000);
+                      }}
                     >
-                      2000 points = 10€
-                    </Button>
-                    <Button
-                      variant={selectedAmount === 4000 ? "default" : "outline"}
-                      className={selectedAmount === 4000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(4000)}
-                    >
-                      4000 points = 20€
-                    </Button>
-                    <Button
-                      variant={selectedAmount === 10000 ? "default" : "outline"}
-                      className={selectedAmount === 10000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(10000)}
-                    >
-                      10000 points = 50€
+                      50000 points = 5€
                     </Button>
                   </div>
                   
+                  {!isWithdrawalPossible && (
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
+                      Vous avez besoin d'au moins {minWithdrawalPoints} points ({pointsToEuros(minWithdrawalPoints)}€) pour effectuer un retrait.
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Email PayPal</label>
-                    <Input placeholder="votre-email@exemple.com" />
+                    <Input 
+                      placeholder="votre-email@exemple.com" 
+                      value={paymentEmail}
+                      onChange={(e) => setPaymentEmail(e.target.value)}
+                    />
                   </div>
                   
                   <Button 
                     onClick={handleRedeem} 
                     className="w-full bg-gradient-to-br from-brand-purple to-brand-purple/80"
+                    disabled={!isWithdrawalPossible || !selectedAmount || !paymentEmail || isRedeeming}
                   >
-                    Valider le retrait
+                    {isRedeeming ? 'Traitement...' : 'Valider le retrait'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="gift" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <RewardCard 
-                title="Amazon" 
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png"
-                points={2000}
-                value="10€"
-                onClick={() => setSelectedAmount(2000)}
-                selected={selectedAmount === 2000}
-              />
-              <RewardCard 
-                title="Netflix" 
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/2560px-Netflix_2015_logo.svg.png"
-                points={3000}
-                value="15€"
-                onClick={() => setSelectedAmount(3000)}
-                selected={selectedAmount === 3000}
-              />
-              <RewardCard 
-                title="Spotify" 
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Spotify_logo_with_text.svg/2560px-Spotify_logo_with_text.svg.png"
-                points={2000}
-                value="10€"
-                onClick={() => setSelectedAmount(2000)}
-                selected={selectedAmount === 2000}
-              />
-              <RewardCard 
-                title="Steam" 
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/2048px-Steam_icon_logo.svg.png"
-                points={5000}
-                value="25€"
-                onClick={() => setSelectedAmount(5000)}
-                selected={selectedAmount === 5000}
-              />
-            </div>
-            
-            <Button 
-              onClick={handleRedeem} 
-              className="w-full bg-gradient-to-br from-brand-purple to-brand-purple/80"
-            >
-              Valider la carte cadeau
-            </Button>
-          </TabsContent>
-          
-          <TabsContent value="crypto" className="space-y-4">
+          <TabsContent value="orange_money" className="space-y-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Retrait en Crypto</CardTitle>
-                <CardDescription>Transférez vos points en cryptomonnaies</CardDescription>
+                <CardTitle className="text-lg">Retrait Orange Money</CardTitle>
+                <CardDescription>Via Taptap Send - Entrez votre numéro de téléphone</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
                     <Button
-                      variant={selectedAmount === 5000 ? "default" : "outline"}
-                      className={selectedAmount === 5000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(5000)}
+                      variant={selectedAmount === 25000 ? "default" : "outline"}
+                      className={selectedAmount === 25000 ? "border-2 border-brand-purple" : ""}
+                      onClick={() => {
+                        setSelectedMethod('orange_money');
+                        setSelectedAmount(25000);
+                      }}
                     >
-                      5000 points = 0.001 BTC
+                      25000 points = 2,50€
                     </Button>
                     <Button
-                      variant={selectedAmount === 3000 ? "default" : "outline"}
-                      className={selectedAmount === 3000 ? "border-2 border-brand-purple" : ""}
-                      onClick={() => setSelectedAmount(3000)}
+                      variant={selectedAmount === 50000 ? "default" : "outline"}
+                      className={selectedAmount === 50000 ? "border-2 border-brand-purple" : ""}
+                      onClick={() => {
+                        setSelectedMethod('orange_money');
+                        setSelectedAmount(50000);
+                      }}
                     >
-                      3000 points = 0.01 ETH
+                      50000 points = 5€
                     </Button>
                   </div>
                   
+                  {!isWithdrawalPossible && (
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
+                      Vous avez besoin d'au moins {minWithdrawalPoints} points ({pointsToEuros(minWithdrawalPoints)}€) pour effectuer un retrait.
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Adresse de portefeuille</label>
-                    <Input placeholder="Adresse de votre wallet" />
+                    <label className="text-sm font-medium">Numéro de téléphone</label>
+                    <Input 
+                      placeholder="+123456789" 
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
                   </div>
                   
                   <Button 
                     onClick={handleRedeem} 
                     className="w-full bg-gradient-to-br from-brand-purple to-brand-purple/80"
+                    disabled={!isWithdrawalPossible || !selectedAmount || !phoneNumber || isRedeeming}
                   >
-                    Valider le retrait
+                    {isRedeeming ? 'Traitement...' : 'Valider le retrait'}
                   </Button>
                 </div>
               </CardContent>
@@ -218,55 +293,38 @@ const Rewards = () => {
                 <CardDescription>Vos récompenses précédentes</CardDescription>
               </CardHeader>
               <CardContent>
-                {[
-                  { date: '15/04/2025', type: 'PayPal', amount: '5€', status: 'Complété' },
-                  { date: '28/03/2025', type: 'Amazon', amount: '10€', status: 'Complété' },
-                  { date: '12/03/2025', type: 'PayPal', amount: '20€', status: 'Complété' },
-                ].map((item, i) => (
-                  <div key={i} className="flex justify-between py-3 border-b last:border-0">
-                    <div>
-                      <p className="font-medium">{item.type}</p>
-                      <p className="text-sm text-gray-500">{item.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{item.amount}</p>
-                      <p className="text-sm text-green-600">{item.status}</p>
-                    </div>
+                {isLoadingHistory ? (
+                  <div className="py-8 text-center">
+                    <div className="w-8 h-8 border-4 border-t-brand-purple rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-500">Chargement de l'historique...</p>
                   </div>
-                ))}
+                ) : withdrawals.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-gray-500">Aucun retrait effectué pour le moment</p>
+                  </div>
+                ) : (
+                  withdrawals.map((withdrawal) => {
+                    const statusInfo = formatStatus(withdrawal.status);
+                    return (
+                      <div key={withdrawal.id} className="flex justify-between py-3 border-b last:border-0">
+                        <div>
+                          <p className="font-medium">{withdrawal.payment_method === 'paypal' ? 'PayPal' : 'Orange Money'}</p>
+                          <p className="text-sm text-gray-500">{formatDate(withdrawal.created_at)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{pointsToEuros(withdrawal.amount_points)}€</p>
+                          <p className={`text-sm ${statusInfo.color}`}>{statusInfo.text}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
     </Layout>
-  );
-};
-
-interface RewardCardProps {
-  title: string;
-  image: string;
-  points: number;
-  value: string;
-  onClick: () => void;
-  selected: boolean;
-}
-
-const RewardCard = ({ title, image, points, value, onClick, selected }: RewardCardProps) => {
-  return (
-    <Card 
-      className={`cursor-pointer transition-all hover:scale-105 ${selected ? 'border-2 border-brand-purple' : ''}`}
-      onClick={onClick}
-    >
-      <CardContent className="p-3 flex flex-col items-center">
-        <div className="h-12 flex items-center justify-center mb-2">
-          <img src={image} alt={title} className="max-h-full max-w-full" />
-        </div>
-        <p className="font-semibold">{title}</p>
-        <p className="text-xs text-gray-600">{points} points</p>
-        <p className="text-sm font-medium">{value}</p>
-      </CardContent>
-    </Card>
   );
 };
 

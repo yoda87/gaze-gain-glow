@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X } from 'lucide-react';
+import { Check, X, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
 import Layout from '@/components/Layout';
 
@@ -13,7 +13,7 @@ const WatchAd = () => {
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const navigate = useNavigate();
-  const { watchAd } = useUser();
+  const { watchAd, user, getPointsPerAd } = useUser();
   
   useEffect(() => {
     // Simulate loading
@@ -44,13 +44,26 @@ const WatchAd = () => {
     return () => clearTimeout(loadTimer);
   }, []);
   
-  const handleCompleteAd = () => {
-    watchAd();
-    toast({
-      title: "Bravo !",
-      description: "Vous avez gagné 50 points en regardant cette publicité.",
-    });
-    navigate('/');
+  const handleCompleteAd = async () => {
+    try {
+      await watchAd();
+      
+      toast.success("Bravo !", {
+        description: `Vous avez gagné ${getPointsPerAd()} points en regardant cette publicité.`,
+      });
+      
+      // Si c'était la première pub et que le bonus a été attribué
+      if (user.adsWatchedToday === 1 && user.firstAdWatched && user.signupBonusAwarded) {
+        toast.success("Bonus de bienvenue !", {
+          description: "Vous avez reçu 100 points de bonus pour votre première publicité.",
+        });
+      }
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error completing ad:', error);
+      toast.error("Une erreur est survenue lors de la validation");
+    }
   };
   
   const handleSkip = () => {
@@ -79,7 +92,13 @@ const WatchAd = () => {
               {/* Placeholder for actual ad video */}
               <div className="text-white text-center">
                 <h2 className="text-xl mb-2">Publicité en cours</h2>
-                <p className="opacity-70">Regardez la vidéo pour gagner des points</p>
+                <p className="opacity-70 mb-4">Regardez la vidéo pour gagner des points</p>
+                
+                {/* Afficher les points à gagner selon le niveau */}
+                <div className="bg-black/30 py-2 px-4 rounded-lg inline-flex items-center">
+                  <TrendingUp className="mr-2 h-5 w-5 text-brand-green" />
+                  <span className="text-lg font-semibold">{getPointsPerAd()} points</span>
+                </div>
               </div>
               
               {/* Timer overlay */}
@@ -93,6 +112,10 @@ const WatchAd = () => {
             <div className="text-white text-center">
               <h2 className="text-xl mb-3">Vidéo terminée !</h2>
               <p className="opacity-70 mb-4">Cliquez sur Valider pour recevoir vos points</p>
+              <div className="mb-6 font-semibold text-2xl flex justify-center items-center">
+                <TrendingUp className="mr-2 h-6 w-6 text-brand-green" />
+                <span>+{getPointsPerAd()} points</span>
+              </div>
               <Button onClick={handleCompleteAd} className="bg-gradient-to-br from-brand-green to-brand-green/80 hover:from-brand-green/90 hover:to-brand-green/70">
                 <Check className="mr-2 h-5 w-5" />
                 Valider et gagner

@@ -9,30 +9,205 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ad_views: {
+        Row: {
+          ad_id: string
+          completed: boolean | null
+          id: string
+          points_earned: number | null
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          ad_id: string
+          completed?: boolean | null
+          id?: string
+          points_earned?: number | null
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          ad_id?: string
+          completed?: boolean | null
+          id?: string
+          points_earned?: number | null
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advertisements: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number
+          id: string
+          is_active: boolean | null
+          points_reward: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration: number
+          id?: string
+          is_active?: boolean | null
+          points_reward: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      cpa_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          offer_id: string
+          points_earned: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          offer_id: string
+          points_earned: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          offer_id?: string
+          points_earned?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cpa_completions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "cpa_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cpa_offers: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          points_reward: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           balance: number | null
           created_at: string
+          device_id: string | null
           email_verified: boolean | null
+          first_ad_watched: boolean | null
           id: string
+          level: number
           name: string | null
+          referral_code: string | null
+          referral_count: number | null
+          signup_bonus_awarded: boolean | null
+          total_points_earned: number
           updated_at: string
         }
         Insert: {
           balance?: number | null
           created_at?: string
+          device_id?: string | null
           email_verified?: boolean | null
+          first_ad_watched?: boolean | null
           id: string
+          level?: number
           name?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
+          signup_bonus_awarded?: boolean | null
+          total_points_earned?: number
           updated_at?: string
         }
         Update: {
           balance?: number | null
           created_at?: string
+          device_id?: string | null
           email_verified?: boolean | null
+          first_ad_watched?: boolean | null
           id?: string
+          level?: number
           name?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
+          signup_bonus_awarded?: boolean | null
+          total_points_earned?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          points_awarded: boolean | null
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referred_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }
@@ -59,6 +234,42 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount_euros: number
+          amount_points: number
+          created_at: string
+          id: string
+          payment_details: Json | null
+          payment_method: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_euros: number
+          amount_points: number
+          created_at?: string
+          id?: string
+          payment_details?: Json | null
+          payment_method: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_euros?: number
+          amount_points?: number
+          created_at?: string
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
