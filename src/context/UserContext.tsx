@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface User {
+  id: string; // Ajout de la propriété 'id' manquante
   name: string;
   balance: number;
   adsWatchedToday: number;
@@ -131,6 +132,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         // Update user state with data from Supabase
         setUser(prev => ({
           ...prev,
+          id: authUser.id, // Ajout de l'ID de l'utilisateur
           name: authUser.user_metadata.name || data?.name || 'Utilisateur',
           balance: data?.balance || 0,
           level: data?.level || 1,
