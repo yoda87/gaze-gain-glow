@@ -35,9 +35,8 @@ const InputOTPSlot = React.forwardRef<
 >(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
   
-  // Robust null check for the entire context and slots array
-  if (!inputOTPContext || !Array.isArray(inputOTPContext.slots) || inputOTPContext.slots.length === 0) {
-    // Return an empty placeholder when context or slots are not available
+  // If context is not available, render a basic slot
+  if (!inputOTPContext) {
     return (
       <div
         ref={ref}
@@ -50,8 +49,11 @@ const InputOTPSlot = React.forwardRef<
     );
   }
   
-  // Additional bounds check to prevent out-of-bounds array access
-  if (index < 0 || index >= inputOTPContext.slots.length) {
+  // Safe access to the slots array
+  const slots = inputOTPContext.slots || [];
+  
+  // Check if index is valid
+  if (index < 0 || index >= slots.length) {
     return (
       <div
         ref={ref}
@@ -64,10 +66,10 @@ const InputOTPSlot = React.forwardRef<
     );
   }
   
-  // Now we can safely access the slot
-  const slot = inputOTPContext.slots[index];
+  // Safely access the slot
+  const slot = slots[index];
   
-  // Handle the case where the specific slot might be undefined
+  // Default values if slot properties are undefined
   const char = slot?.char || '';
   const hasFakeCaret = slot?.hasFakeCaret || false;
   const isActive = slot?.isActive || false;
