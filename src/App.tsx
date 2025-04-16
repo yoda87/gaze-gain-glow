@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./pages/SplashScreen";
 import Dashboard from "./pages/Dashboard";
 import WatchAd from "./pages/WatchAd";
+import AvailableAds from "./pages/AvailableAds";
 import Rewards from "./pages/Rewards";
 import Referral from "./pages/Referral";
 import Profile from "./pages/Profile";
@@ -62,6 +63,7 @@ const App = () => {
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/watch-ad" element={<WatchAd />} />
+                  <Route path="/available-ads" element={<AvailableAds />} />
                   <Route path="/rewards" element={<Rewards />} />
                   <Route path="/referral" element={<Referral />} />
                   <Route path="/profile" element={<Profile />} />

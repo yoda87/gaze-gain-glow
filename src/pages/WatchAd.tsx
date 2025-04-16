@@ -1,49 +1,112 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, X, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
 import Layout from '@/components/Layout';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Advertisement {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: number;
+  points_reward: number;
+}
 
 const WatchAd = () => {
   const [adState, setAdState] = useState<'loading' | 'playing' | 'completed'>('loading');
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [currentAd, setCurrentAd] = useState<Advertisement | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { watchAd, user, getPointsPerAd } = useUser();
   
+  // Extract adId from query params
+  const searchParams = new URLSearchParams(location.search);
+  const adId = searchParams.get('id');
+  
   useEffect(() => {
-    const loadTimer = setTimeout(() => {
-      setAdState('playing');
-      
-      const interval = setInterval(() => {
-        setTimeLeft(prev => {
-          const newValue = prev - 1;
-          if (newValue <= 0) {
-            clearInterval(interval);
-            setAdState('completed');
-            return 0;
-          }
-          return newValue;
-        });
+    // Fetch specific ad if id is provided, otherwise fetch a random active ad
+    const fetchAd = async () => {
+      try {
+        let query = supabase.from('advertisements').select('*').eq('is_active', true);
         
-        setProgress(prev => {
-          const newValue = prev + (100 / 30);
-          return Math.min(newValue, 100);
+        if (adId) {
+          query = query.eq('id', adId);
+        } else {
+          query = query.limit(1);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+          toast.error("Aucune publicité disponible", {
+            description: "Veuillez réessayer plus tard"
+          });
+          navigate('/');
+          return;
+        }
+        
+        setCurrentAd(data[0]);
+        setTimeLeft(data[0].duration || 30); // Use ad duration or default to 30 seconds
+        
+        // Start the ad after loading
+        const loadTimer = setTimeout(() => {
+          setAdState('playing');
+          
+          const interval = setInterval(() => {
+            setTimeLeft(prev => {
+              const newValue = prev - 1;
+              if (newValue <= 0) {
+                clearInterval(interval);
+                setAdState('completed');
+                return 0;
+              }
+              return newValue;
+            });
+            
+            setProgress(prev => {
+              const totalDuration = currentAd?.duration || 30;
+              const newValue = prev + (100 / totalDuration);
+              return Math.min(newValue, 100);
+            });
+          }, 1000);
+          
+          return () => clearInterval(interval);
+        }, 2000);
+        
+        return () => clearTimeout(loadTimer);
+      } catch (error) {
+        console.error('Error fetching advertisement:', error);
+        toast.error("Erreur lors du chargement", {
+          description: "Impossible de charger la publicité"
         });
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }, 2000);
+        navigate('/');
+      }
+    };
     
-    return () => clearTimeout(loadTimer);
-  }, []);
+    fetchAd();
+  }, [adId, navigate]);
   
   const handleCompleteAd = async () => {
+    if (!currentAd) return;
+    
     try {
+      // Record the ad view in the database
+      await supabase.from('ad_views').insert({
+        ad_id: currentAd.id,
+        user_id: user.id,
+        completed: true,
+        points_earned: getPointsPerAd()
+      });
+      
       await watchAd();
       
       toast.success("Bravo !", {
@@ -59,7 +122,9 @@ const WatchAd = () => {
       navigate('/');
     } catch (error) {
       console.error('Error completing ad:', error);
-      toast.error("Une erreur est survenue lors de la validation");
+      toast.error("Une erreur est survenue lors de la validation", {
+        description: "Veuillez réessayer"
+      });
     }
   };
   
@@ -84,7 +149,7 @@ const WatchAd = () => {
           {adState === 'playing' && (
             <div className="w-full h-full flex items-center justify-center relative">
               <div className="text-white text-center">
-                <h2 className="text-xl mb-2">Publicité en cours</h2>
+                <h2 className="text-xl mb-2">{currentAd?.title || 'Publicité en cours'}</h2>
                 <p className="opacity-70 mb-4">Regardez la vidéo pour gagner des points</p>
                 
                 <div className="bg-black/30 py-2 px-4 rounded-lg inline-flex items-center">

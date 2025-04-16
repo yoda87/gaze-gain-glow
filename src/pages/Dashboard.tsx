@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, TrendingUp, Calendar, Play, Gift } from 'lucide-react';
+import { Award, TrendingUp, Calendar, Play, Gift, List } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -64,6 +64,10 @@ const Dashboard = () => {
     }
   };
   
+  const handleViewAllAds = () => {
+    navigate('/available-ads');
+  };
+  
   // Calculer le taux de conversion
   const conversionRate = () => {
     // 1000 points = 0,10€
@@ -110,13 +114,23 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Button 
-          onClick={handleWatchAd}
-          size="lg"
-          className="w-full py-8 text-lg mb-6 bg-gradient-to-br from-brand-purple to-brand-purple/80 hover:from-brand-purple/90 hover:to-brand-purple/70 animate-pulse-scale border-none"
-        >
-          <Play className="mr-2 h-6 w-6" /> Regarder une pub (+{getPointsPerAd()}pts)
-        </Button>
+        <div className="flex flex-col space-y-3 mb-6">
+          <Button 
+            onClick={handleWatchAd}
+            size="lg"
+            className="w-full py-8 text-lg bg-gradient-to-br from-brand-purple to-brand-purple/80 hover:from-brand-purple/90 hover:to-brand-purple/70 animate-pulse-scale border-none"
+          >
+            <Play className="mr-2 h-6 w-6" /> Regarder une pub (+{getPointsPerAd()}pts)
+          </Button>
+          
+          <Button
+            onClick={handleViewAllAds}
+            variant="outline"
+            className="w-full"
+          >
+            <List className="mr-2 h-5 w-5" /> Voir toutes les publicités disponibles
+          </Button>
+        </div>
         
         <div className="grid grid-cols-3 gap-4 mb-8">
           <StatCard 
