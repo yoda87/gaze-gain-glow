@@ -12,7 +12,7 @@ import {
   InputOTPSlot
 } from '@/components/ui/input-otp';
 import { useAuth } from '@/context/AuthContext';
-import { Mail, ArrowRight, RefreshCw } from 'lucide-react';
+import { Mail, ArrowRight, RefreshCw, Home } from 'lucide-react';
 
 const EmailVerification = () => {
   const [verificationCode, setVerificationCode] = useState('');
@@ -110,6 +110,13 @@ const EmailVerification = () => {
     }
   };
 
+  const handleSkipVerification = () => {
+    toast.info('Vérification reportée', {
+      description: 'Vous pourrez vérifier votre email plus tard'
+    });
+    navigate('/');
+  };
+
   return (
     <Layout hideNav>
       <div className="container max-w-md mx-auto pt-12 pb-20 px-4">
@@ -153,7 +160,7 @@ const EmailVerification = () => {
               {isSubmitting ? 'Vérification...' : 'Vérifier'} {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           </CardContent>
-          <CardFooter className="flex flex-col">
+          <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center w-full">
               <p className="text-gray-600 mb-2">
                 Vous n'avez pas reçu le code?
@@ -166,6 +173,17 @@ const EmailVerification = () => {
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 {resendDisabled ? `Réessayer dans ${countdown}s` : 'Renvoyer le code'}
+              </Button>
+            </div>
+            
+            <div className="mt-4 w-full">
+              <Button 
+                variant="ghost" 
+                className="w-full text-gray-600"
+                onClick={handleSkipVerification}
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Continuer sans vérifier
               </Button>
             </div>
           </CardFooter>

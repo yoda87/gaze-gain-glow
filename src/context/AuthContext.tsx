@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verificationPrompted, setVerificationPrompted] = useState(false);
   const navigate = useNavigate();
 
   // Check email verification status
@@ -48,8 +49,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const verified = data && data.email_verified ? true : false;
       setIsEmailVerified(verified);
       
-      // If not verified and it's a new sign up (not a login), redirect to verification page
-      if (!verified && user?.email && session?.user?.app_metadata?.provider === 'email' && !session?.user?.email_confirmed_at) {
+      // Only redirect to verification page if:
+      // 1. User is not verified AND
+      // 2. It's a new sign up (not a login) AND
+      // 3. We haven't already prompted for verification in this session
+      if (!verified && 
+          user?.email && 
+          session?.user?.app_metadata?.provider === 'email' && 
+          !session?.user?.email_confirmed_at && 
+          !verificationPrompted && 
+          window.location.pathname !== '/verify-email') {
+            
+        // Set flag to prevent multiple redirects
+        setVerificationPrompted(true);
+        
         toast.info('Veuillez vérifier votre email', {
           description: 'Confirmez votre adresse email pour accéder à toutes les fonctionnalités'
         });
@@ -73,6 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(!!currentSession);
         setIsLoading(false);
         
+        // Reset verification prompted flag on sign out
+        if (event === 'SIGNED_OUT') {
+          setVerificationPrompted(false);
+        }
+        
         // If signed in, check email verification
         if (currentSession?.user) {
           checkEmailVerification(currentSession.user.id);
@@ -82,7 +100,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           toast.success('Connexion réussie !');
           // Use setTimeout to prevent auth deadlocks
           setTimeout(() => {
-            navigate('/');
+            // Don't redirect to home if we're on the email verification page
+            if (window.location.pathname !== '/verify-email') {
+              navigate('/');
+            }
           }, 0);
         } else if (event === 'SIGNED_OUT') {
           toast.info('Vous êtes déconnecté');
