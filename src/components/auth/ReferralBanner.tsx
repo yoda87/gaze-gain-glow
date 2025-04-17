@@ -15,6 +15,7 @@ const ReferralBanner = ({ referralCode }: ReferralBannerProps) => {
       <div>
         <p className="text-sm font-medium">Vous avez été parrainé(e) !</p>
         <p className="text-xs text-gray-600">Vous recevrez un bonus après votre inscription</p>
+        <p className="text-xs font-semibold text-brand-purple mt-1">Code utilisé : {referralCode}</p>
       </div>
     </div>
   );

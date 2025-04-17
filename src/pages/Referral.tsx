@@ -1,52 +1,60 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Copy, Share2, Check, Gift } from 'lucide-react';
+import { Users, Copy, Share2, Check, Gift, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
 import Layout from '@/components/Layout';
-import { supabase } from '@/integrations/supabase/client';
+import { useDevice } from '@/hooks/use-device';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Referral = () => {
   const { user, updateReferrals } = useUser();
   const [copied, setCopied] = useState(false);
   const [referralLink, setReferralLink] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const { isNative } = useDevice();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     if (user.referralCode) {
-      // Use the current origin (based on where the app is running) with the referral code
+      // Set both the link and the plain code
       setReferralLink(`${window.location.origin}/signup?ref=${user.referralCode}`);
+      setReferralCode(user.referralCode);
     }
   }, [user.referralCode]);
   
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink);
+  const copyToClipboard = (text: string, type: 'link' | 'code') => {
+    navigator.clipboard.writeText(text);
     setCopied(true);
     
-    toast.success("Lien copié !", {
-      description: "Le lien de parrainage a été copié dans votre presse-papier.",
+    toast.success(type === 'link' ? "Lien copié !" : "Code copié !", {
+      description: type === 'link' 
+        ? "Le lien de parrainage a été copié dans votre presse-papier."
+        : "Le code de parrainage a été copié dans votre presse-papier.",
     });
     
     setTimeout(() => setCopied(false), 2000);
   };
   
   const shareReferral = () => {
+    const shareText = `Rejoins-moi sur PubCash avec mon code de parrainage : ${referralCode}. Ou utilise ce lien : ${referralLink}`;
+    
     if (navigator.share) {
       navigator.share({
-        title: 'Rejoins-moi sur Gaze Gain Glow',
-        text: 'Utilise mon lien pour t\'inscrire et nous gagnerons tous les deux des points bonus!',
+        title: 'Rejoins-moi sur PubCash',
+        text: shareText,
         url: referralLink,
       })
       .catch(error => console.log('Error sharing', error));
     } else {
-      copyToClipboard();
+      copyToClipboard(referralLink, 'link');
     }
   };
   
-  // Check for new referrals
   const checkForNewReferral = async () => {
     setIsChecking(true);
     try {
@@ -67,13 +75,13 @@ const Referral = () => {
   
   return (
     <Layout>
-      <div className="container max-w-md mx-auto pt-6 pb-20 px-4">
+      <div className="container max-w-md mx-auto pt-4 pb-20 px-4">
         <h1 className="text-2xl font-bold mb-2">Parrainage</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Invitez vos amis et gagnez ensemble
         </p>
         
-        <Card className="mb-6 bg-gradient-to-br from-brand-purple to-brand-purple/80 text-white border-none">
+        <Card className="mb-6 bg-gradient-to-br from-brand-purple to-brand-purple/80 text-white border-none shadow-md">
           <CardContent className="pt-6 pb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-white/20 rounded-full">
@@ -107,20 +115,24 @@ const Referral = () => {
           </CardContent>
         </Card>
         
-        <Card className="mb-6">
+        {/* Code de parrainage (option mobile optimisée) */}
+        <Card className="mb-6 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Votre lien de parrainage</CardTitle>
-            <CardDescription>Partagez ce lien avec vos amis</CardDescription>
+            <CardTitle className="text-lg flex items-center">
+              <Smartphone className="h-5 w-5 mr-2 text-brand-purple" />
+              Votre code de parrainage
+            </CardTitle>
+            <CardDescription>Partagez ce code avec vos amis</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex mb-4">
               <Input
-                value={referralLink}
+                value={referralCode}
                 readOnly
-                className="rounded-r-none"
+                className="rounded-r-none text-center font-bold text-lg tracking-widest"
               />
               <Button
-                onClick={copyToClipboard}
+                onClick={() => copyToClipboard(referralCode, 'code')}
                 variant="outline"
                 className="rounded-l-none border-l-0"
               >
@@ -132,18 +144,18 @@ const Referral = () => {
               </Button>
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               <Button
                 variant="outline"
-                onClick={copyToClipboard}
-                className="flex items-center"
+                onClick={() => copyToClipboard(referralCode, 'code')}
+                className="flex items-center justify-center"
               >
                 <Copy className="h-4 w-4 mr-2" />
-                Copier
+                Copier code
               </Button>
               <Button
                 onClick={shareReferral}
-                className="flex items-center bg-gradient-to-br from-brand-purple to-brand-purple/80"
+                className="flex items-center justify-center bg-gradient-to-br from-brand-purple to-brand-purple/80"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 Partager
@@ -152,7 +164,35 @@ const Referral = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        {/* Lien de parrainage (conservé mais optimisé) */}
+        <Card className="mb-6 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg">Votre lien de parrainage</CardTitle>
+            <CardDescription>Alternative au code, partagez ce lien</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex mb-4">
+              <Input
+                value={referralLink}
+                readOnly
+                className="rounded-r-none text-xs"
+              />
+              <Button
+                onClick={() => copyToClipboard(referralLink, 'link')}
+                variant="outline"
+                className="rounded-l-none border-l-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">Comment ça marche</CardTitle>
           </CardHeader>
@@ -163,9 +203,9 @@ const Referral = () => {
                   <span className="text-brand-purple font-semibold">1</span>
                 </div>
                 <div>
-                  <p className="font-medium">Partagez votre lien</p>
+                  <p className="font-medium">Partagez votre code</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Envoyez votre lien de parrainage à vos amis
+                    Envoyez votre code de parrainage à vos amis
                   </p>
                 </div>
               </div>
@@ -177,7 +217,7 @@ const Referral = () => {
                 <div>
                   <p className="font-medium">Ils s'inscrivent</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Vos amis créent un compte via votre lien
+                    Vos amis utilisent votre code lors de l'inscription
                   </p>
                 </div>
               </div>

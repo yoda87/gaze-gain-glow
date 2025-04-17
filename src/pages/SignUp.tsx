@@ -21,8 +21,8 @@ const SignUp = () => {
 
   return (
     <Layout hideNav>
-      <div className="container max-w-md mx-auto pt-12 pb-20 px-4">
-        <div className="text-center mb-8">
+      <div className="container max-w-md mx-auto pt-8 pb-20 px-4">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold mb-2 text-brand-purple">Inscription</h1>
           <p className="text-gray-600">Créez votre compte pour commencer à gagner des récompenses</p>
         </div>
