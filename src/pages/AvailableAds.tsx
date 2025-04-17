@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import { Play, Clock, TrendingUp, AlertCircle, Video, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +22,7 @@ interface Advertisement {
 const AvailableAds = () => {
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
   const { user, getPointsPerAd } = useUser();
   
@@ -51,6 +52,13 @@ const AvailableAds = () => {
     }
   };
   
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAvailableAds();
+    setRefreshing(false);
+    toast.success("Liste des publicités mise à jour");
+  };
+  
   const handleWatchAd = (adId: string) => {
     // Redirect to watch-ad page with the specific ad ID
     navigate(`/watch-ad?id=${adId}`);
@@ -59,7 +67,33 @@ const AvailableAds = () => {
   return (
     <Layout>
       <div className="container max-w-md mx-auto pt-6 pb-20 px-4">
-        <h1 className="text-2xl font-bold mb-6">Publicités disponibles</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Publicités disponibles</h1>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleRefresh} 
+            disabled={refreshing || loading}
+            className="h-9 w-9"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        
+        {/* Info card about points */}
+        <Card className="mb-6 bg-brand-purple/10 border-brand-purple/20">
+          <CardContent className="p-4">
+            <div className="flex items-start">
+              <TrendingUp className="h-5 w-5 text-brand-purple mr-3 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium mb-1">Gagnez {getPointsPerAd()} points par publicité visionnée</p>
+                <p className="text-xs text-gray-600">
+                  Choisissez une publicité ci-dessous et regardez-la jusqu'à la fin pour gagner des points.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
         {loading ? (
           // Loading skeletons
@@ -83,17 +117,23 @@ const AvailableAds = () => {
             {advertisements.map((ad) => (
               <Card key={ad.id} className="bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{ad.title}</h3>
+                  <div className="flex items-center mb-2">
+                    <div className="bg-brand-purple/10 p-2 rounded-full mr-3">
+                      <Video className="h-5 w-5 text-brand-purple" />
+                    </div>
+                    <h3 className="font-semibold text-lg">{ad.title}</h3>
+                  </div>
+                  
                   {ad.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{ad.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 ml-10">{ad.description}</p>
                   )}
                   
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex justify-between items-center mb-3 ml-10">
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                       <Clock className="h-4 w-4 mr-1" />
                       <span>{ad.duration} secondes</span>
                     </div>
-                    <div className="bg-brand-purple/10 text-brand-purple px-2 py-1 rounded-full flex items-center text-sm font-medium">
+                    <div className="bg-brand-purple/10 text-brand-purple px-3 py-1 rounded-full flex items-center text-sm font-medium">
                       <TrendingUp className="h-4 w-4 mr-1" />
                       <span>{getPointsPerAd()} pts</span>
                     </div>
@@ -101,9 +141,9 @@ const AvailableAds = () => {
                   
                   <Button 
                     onClick={() => handleWatchAd(ad.id)} 
-                    className="w-full bg-gradient-to-br from-brand-purple to-brand-purple/80 hover:from-brand-purple/90 hover:to-brand-purple/70"
+                    className="w-full bg-gradient-to-br from-brand-purple to-brand-purple/80 hover:from-brand-purple/90 hover:to-brand-purple/70 active:scale-[0.98] transition-all"
                   >
-                    <Play className="mr-2 h-4 w-4" /> Regarder la publicité
+                    <Play className="mr-2 h-4 w-4" /> Regarder cette publicité
                   </Button>
                 </CardContent>
               </Card>
@@ -120,11 +160,12 @@ const AvailableAds = () => {
               Revenez plus tard pour voir les nouvelles publicités disponibles.
             </p>
             <Button 
-              onClick={() => navigate('/')} 
+              onClick={handleRefresh} 
               variant="outline"
               className="mx-auto"
             >
-              Retour à l'accueil
+              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Actualiser
             </Button>
           </div>
         )}
