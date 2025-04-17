@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { AtSign, Eye, EyeOff, Lock, User, Gift } from 'lucide-react';
+import { AtSign, Eye, EyeOff, Lock, User, Gift, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 
@@ -18,7 +18,8 @@ const signUpSchema = z.object({
   email: z.string().email({ message: "Adresse email invalide" }),
   password: z.string().min(6, { message: "Le mot de passe doit faire au moins 6 caractères" }),
   confirmPassword: z.string(),
-  name: z.string().min(2, { message: "Le nom doit avoir au moins 2 caractères" })
+  name: z.string().min(2, { message: "Le nom doit avoir au moins 2 caractères" }),
+  referralCode: z.string().optional()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"]
@@ -48,13 +49,31 @@ const SignUp = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      name: ''
+      name: '',
+      referralCode: referralCode
     }
   });
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsSubmitting(true);
     try {
+      // Validate referral code if provided
+      if (data.referralCode && data.referralCode.trim() !== '') {
+        const { data: referrerData, error: referrerError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', data.referralCode.trim())
+          .maybeSingle();
+          
+        if (referrerError || !referrerData) {
+          toast.error('Code de parrainage invalide', {
+            description: 'Le code de parrainage que vous avez entré n\'existe pas'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Sign up with Supabase
       const { error } = await supabase.auth.signUp({
         email: data.email,
@@ -62,7 +81,7 @@ const SignUp = () => {
         options: {
           data: {
             name: data.name,
-            referredBy: referralCode || null, // Store referral code
+            referredBy: data.referralCode ? data.referralCode.trim() : null, // Store referral code
             balance: 0, // Initialize balance to zero
             email_verified: false // Initially not verified
           },
@@ -224,6 +243,28 @@ const SignUp = () => {
                           >
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="referralCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Code de parrainage (optionnel)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                          <Input 
+                            placeholder="Code de parrainage" 
+                            className="pl-10" 
+                            {...field} 
+                            value={field.value || ''}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
